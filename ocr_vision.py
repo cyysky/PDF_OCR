@@ -48,8 +48,10 @@ def call_ocr_api(image_b64: str, max_retries: int = 3, delay: int = 5) -> str | 
                             ],
                         },
                     ],
+                    "chat_template_kwargs": {"enable_thinking": False}
                 },
                 timeout=300,
+                
             )
             response.raise_for_status()
             return response.json()["choices"][0]["message"]["content"]
