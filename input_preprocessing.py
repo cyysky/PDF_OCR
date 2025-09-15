@@ -2,13 +2,12 @@ import os
 import fitz  # PyMuPDF for PDF handling
 import docx2txt
 from docx2pdf import convert as docx_to_pdf
-from pdf2image import convert_from_path
+import fitz  # PyMuPDF for PDF handling
 from pathlib import Path
 import shutil
 import tempfile
 import pytesseract
 from PIL import Image
-
 
 INPUT_DIR = "input"
 OUTPUT_DIR = "preprocessed"
@@ -29,6 +28,7 @@ def correct_orientation(image: Image.Image) -> Image.Image:
                 break
         if rotation and rotation != 0:
             return image.rotate(-rotation, expand=True)
+        pass
     except Exception as e:
         print(f"Orientation detection failed: {e}")
     return image
@@ -37,11 +37,19 @@ def correct_orientation(image: Image.Image) -> Image.Image:
 def process_pdf(file_path, output_folder, base_name):
     """Convert PDF to images at 200dpi and save per page with orientation corrected"""
     ensure_dir(output_folder)
-    pages = convert_from_path(file_path, dpi=200)
+    doc = fitz.open(file_path)
+    pages = []
+    for page_num in range(len(doc)):
+        page = doc.load_page(page_num)
+        pix = page.get_pixmap(dpi=200)
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        pages.append(img)
+    doc.close()
     for i, page in enumerate(pages, start=1):
         page = correct_orientation(page)
         out_path = os.path.join(output_folder, f"{base_name}_page{i}.png")
         page.save(out_path, "PNG")
+        print(out_path)
 
 
 def process_docx(file_path, output_folder, base_name):
@@ -57,7 +65,6 @@ def process_docx(file_path, output_folder, base_name):
             process_pdf(tmp_pdf, output_folder, base_name)
         except Exception as e:
             print(f"Failed to convert {file_path}: {e}")
-
 
 def process_file(file_path):
     file_name = Path(file_path).stem
