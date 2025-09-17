@@ -2,3 +2,11 @@ input
 output
 preprocessed
 ocr_output
+input1
+*.mp3
+*.wav
+*.m4a
+Untitled*.ipynb
+output_txt
+*.pdf
+ocr_*
